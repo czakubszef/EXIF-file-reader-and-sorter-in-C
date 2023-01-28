@@ -2,6 +2,10 @@
 #include<stdio.h>
 #include<ncurses.h>
 #include<string.h>
+#include<libexif/exif-data.h>
+#include <libexif/exif-log.h>
+#include <libexif/exif-mem.h>
+#include<libexif/exif-loader.h>
 //#include"DevIL/include/IL/il.h"
 //Function that allow user to open folder where he want to do something with photos. It returns pointer to file with list of all files that are in folder pointed by user
 FILE *openFolder(char* destination){
@@ -26,6 +30,14 @@ void showPhoto(char* userInput, char* destination){
     free(userInput);
     return;
 }
+void checkExifData(char *destination, char *userInput){
+    ExifLoader *photo=exif_loader_new();
+    char *exifInput=malloc(sizeof(char)*150);
+    strcat(exifInput, destination);
+    strcat(exifInput, userInput);
+    exif_loader_write_file(photo, exifInput);
+    
+}
 int main(){
     //defining variables
     char* userInput=malloc(sizeof(char)*100);
@@ -47,7 +59,6 @@ int main(){
         c=getch();
         if(c=='1'){
             clear();
-            userInput=malloc(sizeof(char)*100);
             printw("EXIF file reader\n\n");
             if(file){
                 while((c=getc(file))!=EOF){
