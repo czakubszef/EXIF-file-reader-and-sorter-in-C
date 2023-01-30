@@ -21,7 +21,7 @@ FILE *openFolder(char* destination){
 //Function that allows to show photo
 void showPhoto(char* userInput, char* destination){
     char *systemInput;
-    alloca(sizeof(systemInput)*(strlen(userInput)+strlen(destination)+strlen("open ")));
+    systemInput=alloca(sizeof(*systemInput)*(strlen(userInput)+strlen(destination)+strlen("open ")));
     sprintf(systemInput,"open %s/%s", destination, userInput);
     system(systemInput);
     return;
@@ -37,74 +37,168 @@ void printExifData(ExifData *photo, int exifTag, const char *msg){
 //Function that checks and print on screen EXIF data contained in JPEG photo
 void checkExifData(char *destination, char *userInput){
     char *exifInput;
-    alloca(sizeof(exifInput)*(strlen(destination)+strlen(userInput)));
+    exifInput=alloca(sizeof(*exifInput)*(strlen(destination)+strlen(userInput)));
     sprintf(exifInput,"%s/%s", destination, userInput);
     ExifData *photo=exif_data_new_from_file(exifInput);
-    const char *messages[]={"Date and time when photo was taken:", "Model of camera:", "Model of lens:", "Expousure time:", "Aperature:", "ISO:"};
-    int tags[]={EXIF_TAG_DATE_TIME_ORIGINAL, EXIF_TAG_MODEL, EXIF_TAG_LENS_MODEL, EXIF_TAG_EXPOSURE_TIME, EXIF_TAG_MAX_APERTURE_VALUE, EXIF_TAG_ISO_SPEED_RATINGS};
+    const char *messages[]={"Date and time when photo was taken:", "Model of camera:", "Expousure time:", "Aperature:", "ISO:"};
+    int tags[]={EXIF_TAG_DATE_TIME_ORIGINAL, EXIF_TAG_MODEL, EXIF_TAG_EXPOSURE_TIME, EXIF_TAG_MAX_APERTURE_VALUE, EXIF_TAG_ISO_SPEED_RATINGS};
     if(!photo){
         printw("Can't open this file.\nPress anything to return to menu.");
         getch();
         return;
     }
-    for(int i=0; i<6; i++){
+    for(int i=0; i<5; i++){
         printExifData(photo, tags[i], messages[i]);
     }
     printw("Press anything to return to menu.");
     getch();
     free(userInput);
 }
+void showSortedPhotos(char* userOption, char *destination, int tag){
+    clear();
+    printw("EXIF file reader\n\n");
+    printw("Here are photos with same selected value of EXIF tag:\n\n");
+    char c;
+    const char *systemOutput="systemOutput.txt";
+    FILE *inputFile=fopen(systemOutput,"r");
+    system("touch sortedPhotos.txt");
+    FILE *outputFile=fopen("sortedPhotos.txt","w");
+    char fileName[200];
+    if(inputFile){
+        for(int i=0; (c=getc(inputFile))!=EOF; i++){
+            if(c=='\n'){
+                fileName[i]=c;
+                char *exifInput;
+                exifInput==alloca(sizeof(char)*200);
+                sprintf(exifInput,"%s/%s", destination, fileName);
+                ExifData *photo=exif_data_new_from_file(exifInput);
+                ExifEntry *data=exif_data_get_entry(photo,tag);
+                char dataOut[1000];
+                exif_entry_get_value(data, dataOut, sizeof(dataOut));
+                if(strcmp(dataOut,userOption)==0){
+                    printw("%s\n", fileName);
+                    fputs(fileName,outputFile);
+                }
+                for(int j=0; j<=strlen(fileName); j++){
+                    fileName[j]='\0';
+                }
+                i=0;
+                continue;
+            }
+            fileName[i]=c;
+        }
+    }
+    printw("\nWhat do you want to do?\n");
+    printw("1. Show one of these photos\n");
+    printw("2. Check EXIF data of one of these photos\n");
+    printw("3. Press q to return to menu\n\n");
+    c=getch();
+    switch(c){
+        case'1':{
+            printw("Type name of photo:");
+            char userInput[100];
+            scanw("%s", userInput);
+            showPhoto(userInput, destination);
+            break;
+        }
+        case'2':{
+            printw("Type name of photo:");
+            char userInput[100];
+            scanw("%s", userInput);
+            checkExifData(destination,userInput);
+            break;
+        }
+        case'q':{
+            free(inputFile);
+            free(outputFile);
+            system("rm -r sortedPhotos.txt");
+            break;
+        }
+    }
+}
+void sortOptions(int tag, char *destination){
+    clear();
+    printw("EXIF file reader\n\n");
+    const char *systemOutput="systemOutput.txt";
+    char *sortList[50];
+    sortList==alloca(sizeof(char)*150);
+    char fileName[50];
+    FILE *file=fopen(systemOutput,"r");
+    char c;
+    int sortListNum=0;
+    if(file){
+        for(int i=0; (c=getc(file))!=EOF; i++){
+            if(c=='\n'){
+                char *exifInput;
+                exifInput==alloca(sizeof(char)*200);
+                sprintf(exifInput,"%s/%s", destination, fileName);
+                ExifData *photo=exif_data_new_from_file(exifInput);
+                ExifEntry *data=exif_data_get_entry(photo,tag);
+                char dataOut[1000];
+                exif_entry_get_value(data, dataOut, sizeof(dataOut));
+                int z=0;
+                for(int i=0; i<sortListNum; i++){
+                    if(strcmp(dataOut, sortList[i])==0){
+                        z=1;
+                        break;
+                    }
+                }
+                if(z==0){
+                    sprintf(sortList[sortListNum], "%s", dataOut);
+                    sortListNum++;
+                }
+                i=0;
+                for(int j=0; j<=strlen(fileName); j++){
+                    fileName[j]='\0';
+                }
+                continue;
+            }
+            fileName[i]=c;
+        }
+    }
+    free(file);
+    printw("What data you want to see photos with:\n");
+    for(int i=0; i<sortListNum; i++){
+        printw("%d. %s\n", i, sortList[i]);
+    }
+    c=getch();
+    int n=c-'0';
+    char* userOption=sortList[n];
+    showSortedPhotos(userOption,destination,tag);
+}
 //function that allow user to sort their photos by making another folder which contain picked photos 
-/*void sortByExifData(char *destination){
+void sortByExifData(char *destination){
     clear();
     printw("EXIF file reader\n\n");
     printw("Choose how you want to sort:\n\n");
     printw("1. By date and time\n2. By camera model\n3. By expusure time\n4. By aperature\n5. By ISO\n\n\n\n\n           Press q to return to menu");
+    int tags[]={EXIF_TAG_DATE_TIME_ORIGINAL, EXIF_TAG_MODEL, EXIF_TAG_EXPOSURE_TIME, EXIF_TAG_MAX_APERTURE_VALUE, EXIF_TAG_ISO_SPEED_RATINGS};
     char c=getch();
-    if(c=='q'){
-        return;
-    }
-    if(c=='1'){
-        clear();
-        printw("EXIF file reader\n\n");
-        FILE *file=fopen("systemOutput.txt","r");
-        char sortList[50][50];
-        char fileName[50];
-        if(file){
-            int sortListNum=0;
-            while((c=getc(file))!=EOF){
-                int character=0;
-                while(1){
-                    if(c=="\n"){
-                        char *exifInput=malloc(sizeof(char)*150);
-                        strcat(exifInput, destination);
-                        strcat(exifInput, fileName);
-                        ExifData *photo=exif_data_new_from_file(exifInput);
-                        ExifEntry *data=exif_data_get_entry(photo,EXIF_TAG_DATE_TIME_ORIGINAL);
-                        char dataOut[1000];
-                        exif_entry_get_value(data, dataOut, sizeof(dataOut));
-                        int z=0;
-                        for(int i=0; i<=sortListNum; i++){
-                            if(strcmp(dataOut, sortList[i])==0){
-                                z=1;
-                                continue;
-                            }
-                        }
-                        if(z==0){
-                            sortListNum++;
-                            for(int i=0; i<sizeof(dataOut); i++){
-                                sortList[sortListNum][i]=dataOut[i];
-                            }
-                        }
-                        break;
-                    }
-                    fileName[character]=c;
-                    character++;
-                }
-            }
+    switch(c){
+        case'q':{
+            return;
+        }
+        case'1':{
+            sortOptions(tags[1], destination);
+            break;
+        }
+        case'2':{
+            sortOptions(tags[2], destination);
+            break;
+        }
+        case'3':{
+            sortOptions(tags[3],destination);
+            break;
+        }
+        case'4':{
+            sortOptions(tags[4], destination);
+            break;
+        }
+        case'5':{
+            sortOptions(tags[5], destination);
         }
     }
-}*/
+}
 int main(){
     //defining variables
     char userInput[100];
@@ -117,17 +211,17 @@ int main(){
     printw("EXIF file reader\n\n");
     printw("Please enter the folder path where the photos are located:\n");
     scanw("%s", destination);
-    FILE *file=openFolder(destination);
     while(1){
         clear();
         printw("EXIF file reader\n\nType numer of action that you want to perform\n\n");
         printw("1. Open photo\n2. Check photo EXIF data");
-        printw("\n\n\n\n\n\n\n\n                Press q to exit programm");
+        printw("\n\n\n\n\n\n\n\n                Press q to exit program");
         c=getch();
         switch(c){
             case'1':{
                 clear();
                 printw("EXIF file reader\n\n");
+                FILE *file=openFolder(destination);
                 if(file){
                     while((c=getc(file))!=EOF){
                         printw("%c", c);
@@ -137,11 +231,13 @@ int main(){
                 printw("Please enter photo that you want to open:\n");
                 scanw("%s", userInput);
                 showPhoto(userInput,destination);
+                free(file);
                 break;
             }
             case'2':{
                 clear();
                 printw("EXIF file reader\n\n");
+                FILE *file=openFolder(destination);
                 if(file){
                     while((c=getc(file))!=EOF){
                         printw("%c", c);
@@ -151,6 +247,11 @@ int main(){
                 printw("Please enter photo name that you want to check:\n");
                 scanw("%s", userInput);
                 checkExifData(destination,userInput);
+                free(file);
+                break;
+            }
+            case'3':{
+                sortByExifData(destination);
                 break;
             }
             case'q':{
