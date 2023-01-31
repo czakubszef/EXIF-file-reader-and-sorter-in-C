@@ -114,7 +114,11 @@ void sortOptions(int tag, char *destination){
     clear();
     printw("EXIF file reader\n\n");
     const char *systemOutput="systemOutput.txt";
-    char *sortList[50];
+    char *sortList[200];
+    for(int i=0; i<200; i++){
+        sortList[i]=alloca(sizeof(char)*300);
+        sortList[i]="\0";
+    }
     char fileName[50];
     FILE *file=fopen(systemOutput,"r");
     char c;
@@ -122,8 +126,7 @@ void sortOptions(int tag, char *destination){
     if(file){
         for(int i=0; (c=getc(file))!=EOF; i++){
             if(c=='\n'){
-                char *exifInput;
-                exifInput==alloca(sizeof(char)*200);
+                char exifInput[400];
                 sprintf(exifInput,"%s/%s", destination, fileName);
                 ExifData *photo=exif_data_new_from_file(exifInput);
                 ExifEntry *data=exif_data_get_entry(photo,tag);
@@ -149,7 +152,7 @@ void sortOptions(int tag, char *destination){
             fileName[i]=c;
         }
     }
-    free(file);
+    fclose(file);
     printw("What data you want to see photos with:\n");
     for(int i=0; i<sortListNum; i++){
         printw("%d. %s\n", i, sortList[i]);
@@ -172,7 +175,7 @@ void sortByExifData(char *destination){
             return;
         }
         default:{
-            sortOptions(tags[c-'0'], destination);
+            sortOptions(tags[c-'1'], destination);
             break;
         }
     }
@@ -209,7 +212,7 @@ int main(){
                 printw("Please enter photo that you want to open:\n");
                 scanw("%s", userInput);
                 showPhoto(userInput,destination);
-                free(file);
+                fclose(file);
                 break;
             }
             case'2':{
@@ -225,7 +228,7 @@ int main(){
                 printw("Please enter photo name that you want to check:\n");
                 scanw("%s", userInput);
                 checkExifData(destination,userInput);
-                free(file);
+                fclose(file);
                 break;
             }
             case'3':{
