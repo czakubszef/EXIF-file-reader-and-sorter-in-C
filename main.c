@@ -36,8 +36,7 @@ void printExifData(ExifData *photo, int exifTag, const char *msg){
 }
 //Function that checks and print on screen EXIF data contained in JPEG photo
 void checkExifData(char *destination, char *userInput){
-    char *exifInput;
-    exifInput=alloca(sizeof(*exifInput)*(strlen(destination)+strlen(userInput)));
+    char *exifInput=alloca(sizeof(*exifInput)*(strlen(destination)+strlen(userInput)));
     sprintf(exifInput,"%s/%s", destination, userInput);
     ExifData *photo=exif_data_new_from_file(exifInput);
     const char *messages[]={"Date and time when photo was taken:", "Model of camera:", "Expousure time:", "Aperature:", "ISO:"};
@@ -61,23 +60,19 @@ void showSortedPhotos(char* userOption, char *destination, int tag){
     char c;
     const char *systemOutput="systemOutput.txt";
     FILE *inputFile=fopen(systemOutput,"r");
-    system("touch sortedPhotos.txt");
-    FILE *outputFile=fopen("sortedPhotos.txt","w");
     char fileName[200];
     if(inputFile){
         for(int i=0; (c=getc(inputFile))!=EOF; i++){
             if(c=='\n'){
-                fileName[i]=c;
-                char *exifInput;
-                exifInput==alloca(sizeof(char)*200);
+                char *exifInput=alloca(sizeof(char)*200);
                 sprintf(exifInput,"%s/%s", destination, fileName);
                 ExifData *photo=exif_data_new_from_file(exifInput);
                 ExifEntry *data=exif_data_get_entry(photo,tag);
                 char dataOut[1000];
                 exif_entry_get_value(data, dataOut, sizeof(dataOut));
                 if(strcmp(dataOut,userOption)==0){
-                    printw("%s", fileName);
-                    fputs(fileName,outputFile);
+                    printw("%s\n", fileName);
+                    
                 }
                 for(int j=0; j<=strlen(fileName); j++){
                     fileName[j]='\0';
@@ -110,7 +105,6 @@ void showSortedPhotos(char* userOption, char *destination, int tag){
         }
         case'q':{
             free(inputFile);
-            free(outputFile);
             system("rm -r sortedPhotos.txt");
             break;
         }
