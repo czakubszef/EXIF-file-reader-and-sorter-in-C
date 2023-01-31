@@ -11,7 +11,6 @@
 #include<libexif/exif-entry.h>
 //Function that allow user to open folder where he want to do something with photos. It returns pointer to file with list of all files that are in folder pointed by user
 FILE *openFolder(char* destination){
-    char c;
     char systemInput[200];
     const char *systemOutput="systemOutput.txt";
     sprintf(systemInput,"ls %s > %s", destination, systemOutput);
@@ -33,6 +32,7 @@ void printExifData(ExifData *photo, int exifTag, const char *msg){
         exif_entry_get_value(data, dataOutput, sizeof(dataOutput));
         printw("%s %s\n", msg, dataOutput);
     }
+    return;
 }
 //Function that checks and print on screen EXIF data contained in JPEG photo
 void checkExifData(char *destination, char *userInput){
@@ -76,7 +76,7 @@ void showSortedPhotos(char* userOption, char *destination, int tag){
                 char dataOut[1000];
                 exif_entry_get_value(data, dataOut, sizeof(dataOut));
                 if(strcmp(dataOut,userOption)==0){
-                    printw("%s\n", fileName);
+                    printw("%s", fileName);
                     fputs(fileName,outputFile);
                 }
                 for(int j=0; j<=strlen(fileName); j++){
@@ -95,14 +95,14 @@ void showSortedPhotos(char* userOption, char *destination, int tag){
     c=getch();
     switch(c){
         case'1':{
-            printw("Type name of photo:");
+            printw("Type name of photo:\n");
             char userInput[100];
             scanw("%s", userInput);
             showPhoto(userInput, destination);
             break;
         }
         case'2':{
-            printw("Type name of photo:");
+            printw("Type name of photo:\n");
             char userInput[100];
             scanw("%s", userInput);
             checkExifData(destination,userInput);
@@ -121,7 +121,6 @@ void sortOptions(int tag, char *destination){
     printw("EXIF file reader\n\n");
     const char *systemOutput="systemOutput.txt";
     char *sortList[50];
-    sortList==alloca(sizeof(char)*150);
     char fileName[50];
     FILE *file=fopen(systemOutput,"r");
     char c;
@@ -178,24 +177,9 @@ void sortByExifData(char *destination){
         case'q':{
             return;
         }
-        case'1':{
-            sortOptions(tags[1], destination);
+        default:{
+            sortOptions(tags[c-'0'], destination);
             break;
-        }
-        case'2':{
-            sortOptions(tags[2], destination);
-            break;
-        }
-        case'3':{
-            sortOptions(tags[3],destination);
-            break;
-        }
-        case'4':{
-            sortOptions(tags[4], destination);
-            break;
-        }
-        case'5':{
-            sortOptions(tags[5], destination);
         }
     }
 }
@@ -214,7 +198,7 @@ int main(){
     while(1){
         clear();
         printw("EXIF file reader\n\nType numer of action that you want to perform\n\n");
-        printw("1. Open photo\n2. Check photo EXIF data");
+        printw("1. Open photo\n2. Check photo EXIF data\n3. Sort photos in selected folder");
         printw("\n\n\n\n\n\n\n\n                Press q to exit program");
         c=getch();
         switch(c){
