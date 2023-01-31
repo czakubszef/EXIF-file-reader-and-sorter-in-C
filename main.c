@@ -3,6 +3,7 @@
 #include<ncurses.h>
 #include<string.h>
 #include<alloca.h>
+#include<dirent.h>
 #include<libexif/exif-data.h>
 #include<libexif/exif-log.h>
 #include<libexif/exif-mem.h>
@@ -104,7 +105,7 @@ void showSortedPhotos(char* userOption, char *destination, int tag){
             break;
         }
         case'q':{
-            free(inputFile);
+            fclose(inputFile);
             system("rm -r sortedPhotos.txt");
             break;
         }
@@ -113,46 +114,37 @@ void showSortedPhotos(char* userOption, char *destination, int tag){
 void sortOptions(int tag, char *destination){
     clear();
     printw("EXIF file reader\n\n");
-    const char *systemOutput="systemOutput.txt";
     char *sortList[200];
     for(int i=0; i<200; i++){
         sortList[i]=alloca(sizeof(char)*300);
         sortList[i]="\0";
     }
-    char fileName[50];
-    FILE *file=fopen(systemOutput,"r");
+    char *fileName=alloca(sizeof(char)*100);
     char c;
     int sortListNum=0;
-    if(file){
-        for(int i=0; (c=getc(file))!=EOF; i++){
-            if(c=='\n'){
-                char exifInput[400];
-                sprintf(exifInput,"%s/%s", destination, fileName);
-                ExifData *photo=exif_data_new_from_file(exifInput);
-                ExifEntry *data=exif_data_get_entry(photo,tag);
-                char dataOut[1000];
-                exif_entry_get_value(data, dataOut, sizeof(dataOut));
-                int z=0;
-                for(int i=0; i<sortListNum; i++){
-                    if(strcmp(dataOut, sortList[i])==0){
-                        z=1;
-                        break;
-                    }
-                }
-                if(z==0){
-                    sprintf(sortList[sortListNum], "%s", dataOut);
-                    sortListNum++;
-                }
-                i=0;
-                for(int j=0; j<=strlen(fileName); j++){
-                    fileName[j]='\0';
-                }
-                continue;
+    struct dirent *file;
+    DIR *path;
+    path=opendir(destination);
+    while(file=readdir(path)){
+        char *exifInput=alloca(sizeof(char)*1000);
+        fileName=file->d_name;
+        sprintf(exifInput,"%s/%s", destination, fileName);
+        ExifData *photo=exif_data_new_from_file(exifInput);
+        ExifEntry *data=exif_data_get_entry(photo,tag);
+        char dataOut[1000];
+        exif_entry_get_value(data, dataOut, sizeof(dataOut));
+        int z=0;
+        for(int i=0; i<sortListNum; i++){
+            if(strcmp(dataOut, sortList[i])==0){
+                z=1;
+                break;
             }
-            fileName[i]=c;
+        }
+        if(z==0){
+            sprintf(sortList[sortListNum], "%s", dataOut);
+            sortListNum++;
         }
     }
-    fclose(file);
     printw("What data you want to see photos with:\n");
     for(int i=0; i<sortListNum; i++){
         printw("%d. %s\n", i, sortList[i]);
@@ -167,15 +159,32 @@ void sortByExifData(char *destination){
     clear();
     printw("EXIF file reader\n\n");
     printw("Choose how you want to sort:\n\n");
-    printw("1. By date and time\n2. By camera model\n3. By expusure time\n4. By aperature\n5. By ISO\n\n\n\n\n           Press q to return to menu");
+    printw("1. By date and time\n2. By camera model\n3. By expusure time\n4. By aperature\n5. By ISO\n\n\n\n\n           Press q to return to menu\n");
     int tags[]={EXIF_TAG_DATE_TIME_ORIGINAL, EXIF_TAG_MODEL, EXIF_TAG_EXPOSURE_TIME, EXIF_TAG_MAX_APERTURE_VALUE, EXIF_TAG_ISO_SPEED_RATINGS};
-    char c=getch();
+    char c;
+    c=getch();
     switch(c){
         case'q':{
             return;
         }
-        default:{
-            sortOptions(tags[c-'1'], destination);
+        case'1':{
+            sortOptions(tags[0], destination);
+            break;
+        }
+        case'2':{
+            sortOptions(tags[1], destination);
+            break;
+        }
+        case'3':{
+            sortOptions(tags[2], destination);
+            break;
+        }
+        case'4':{
+            sortOptions(tags[3], destination);
+            break;
+        }
+        case'5':{
+            sortOptions(tags[4], destination);
             break;
         }
     }
@@ -183,7 +192,7 @@ void sortByExifData(char *destination){
 int main(){
     //defining variables
     char userInput[100];
-    char destination[1000];
+    char destination[5000];
     char c;
     //opening ncurses window
     initscr();
